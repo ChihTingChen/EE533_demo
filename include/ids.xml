@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<nf:module xmlns:nf="http://www.NetFPGA.org/NF2_register_system" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.NetFPGA.org/NF2_register_system NF2_register_system.xsd ">
+    <nf:name>ids</nf:name>
+    <nf:prefix>ids</nf:prefix>
+    <nf:location>udp</nf:location>
+    <nf:description>Registers for Neural Network IDS</nf:description>
+    <nf:blocksize>64</nf:blocksize>
+    <nf:registers>
+        
+        <nf:register>
+            <nf:name>cpu_power</nf:name>
+            <nf:description>1 to run CPU, 0 to freeze</nf:description>
+            <nf:type>generic_software32</nf:type>
+        </nf:register>
+
+        <nf:register>
+            <nf:name>host_addr</nf:name>
+            <nf:description>Target address for host read from data memory</nf:description>
+            <nf:type>generic_software32</nf:type>
+        </nf:register>
+
+        <nf:register>
+            <nf:name>weight_data_lo</nf:name>
+            <nf:description>Lower 32 bits of the 64-bit weight data</nf:description>
+            <nf:type>generic_software32</nf:type>
+        </nf:register>
+
+        <nf:register>
+            <nf:name>weight_data_hi</nf:name>
+            <nf:description>Upper 32 bits of the 64-bit weight data</nf:description>
+            <nf:type>generic_software32</nf:type>
+        </nf:register>
+
+        <nf:register>
+            <nf:name>weight_addr_ctrl</nf:name>
+            <nf:description>Bit 31: Write Trigger, Bits 5-0: Weight ROM Address</nf:description>
+            <nf:type>generic_software32</nf:type>
+        </nf:register>
+
+        <nf:register>
+            <nf:name>imem_data_reg</nf:name>
+            <nf:description>32-bit Instruction Data for TinyARM</nf:description>
+            <nf:type>generic_software32</nf:type>
+        </nf:register>
+
+        <nf:register>
+            <nf:name>imem_addr_ctrl</nf:name>
+            <nf:description>Bit 31: Write Trigger, Bits 5-0: IMEM Address</nf:description>
+            <nf:type>generic_software32</nf:type>
+        </nf:register>
+
+        <nf:register>
+            <nf:name>status_low</nf:name>
+            <nf:description>Read-only: [0]Tumor, [1]Busy, [2]CPU_Halted</nf:description>
+            <nf:type>generic_hardware32</nf:type>
+        </nf:register>
+
+        <nf:register>
+            <nf:name>status_high</nf:name>
+            <nf:description>Read-only: [0]FIFO_Full</nf:description>
+            <nf:type>generic_hardware32</nf:type>
+        </nf:register>
+
+    </nf:registers>
+</nf:module>

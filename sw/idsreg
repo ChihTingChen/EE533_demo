@@ -1,0 +1,110 @@
+#!/usr/bin/perl -w
+use lib "/usr/local/netfpga/lib/Perl5";
+use strict;
+
+my $BASE = 0x2000300;
+my $IDS_CPU_POWER_REG    = $BASE + 0x00;
+my $IDS_W_DATA_LO_REG    = $BASE + 0x08; 
+my $IDS_W_DATA_HI_REG    = $BASE + 0x0C; 
+my $IDS_W_CTRL_REG       = $BASE + 0x10; 
+my $IDS_IMEM_DATA_REG    = $BASE + 0x14; 
+my $IDS_IMEM_CTRL_REG    = $BASE + 0x18; 
+
+my $IDS_HOST_RDATA_LOW_REG  = $BASE + 0x1C;
+my $IDS_HOST_RDATA_HIGH_REG = $BASE + 0x20;
+
+sub regwrite {
+   my( $addr, $value ) = @_;
+   my $cmd = sprintf("regwrite 0x%08x 0x%08x", $addr, $value);
+   `$cmd`;
+}
+
+sub regread {
+   my( $addr ) = @_;
+   my $cmd = sprintf("regread 0x%08x", $addr);
+   my $out = `$cmd`;
+   my @matches = ($out =~ /(0x[0-9a-fA-F]+)/g);
+   if (@matches) { return hex($matches[-1]); }
+   return 0;
+}
+
+sub write_single_imem {
+   my ($addr, $hex_str) = @_;
+   $hex_str =~ s/^0x//i;
+   my $data = hex($hex_str);
+   regwrite($IDS_IMEM_DATA_REG, $data);
+   my $ctrl_val = 0x80000000 | ($addr & 0x3F);
+   regwrite($IDS_IMEM_CTRL_REG, $ctrl_val);
+   regwrite($IDS_IMEM_CTRL_REG, 0x00000000);
+}
+
+sub write_single_weight {
+   my ($addr, $hex_str) = @_;
+   $hex_str =~ s/^0x//i;
+   $hex_str = sprintf("%016s", $hex_str);
+   $hex_str =~ tr/ /0/;
+   my $hi = hex(substr($hex_str, 0, 8));
+   my $lo = hex(substr($hex_str, 8, 8));
+   regwrite($IDS_W_DATA_LO_REG, $lo);
+   regwrite($IDS_W_DATA_HI_REG, $hi);
+   my $ctrl_val = 0x80000000 | ($addr & 0x3F);
+   regwrite($IDS_W_CTRL_REG, $ctrl_val);
+   regwrite($IDS_W_CTRL_REG, 0x00000000);
+}
+
+sub load_hardcoded_program {
+   print "Loading instructions...\n";
+   write_single_imem(0,  "0E700000"); write_single_imem(1,  "0E100003"); write_single_imem(2,  "9E17FF01");
+   write_single_imem(3,  "0E100126"); write_single_imem(4,  "9E17FF02"); write_single_imem(5,  "0E100001");
+   write_single_imem(6,  "9E17FF00"); write_single_imem(7,  "8E27FF03"); write_single_imem(8,  "6E220001");
+   write_single_imem(9,  "4E020000"); write_single_imem(10, "A100FFFC"); write_single_imem(11, "0E100126");
+   write_single_imem(12, "9E17FF01"); write_single_imem(13, "0E100134"); write_single_imem(14, "9E17FF02");
+   write_single_imem(15, "0E100002"); write_single_imem(16, "9E17FF00"); write_single_imem(17, "8E27FF03");
+   write_single_imem(18, "6E220001"); write_single_imem(19, "4E020000"); write_single_imem(20, "A100FFFC");
+   write_single_imem(21, "9E1701FF"); write_single_imem(22, "F0000000");
+}
+
+sub load_hardcoded_weights {
+   print "Loading weights...\n";
+   write_single_weight(0, "ca12cc81e028bbb1"); write_single_weight(1, "0ec8c5677ff6ad0b");
+   write_single_weight(2, "e5f7531c1e0d18da"); write_single_weight(3, "11dd20e4a73a2b0f");
+   write_single_weight(4, "de2fd9bd1a2a1406"); write_single_weight(5, "e010d81c2f501ed3");
+   write_single_weight(6, "0df313e9f80ae202"); write_single_weight(7, "3f0fecb81fdabf43");
+   write_single_weight(8, "20b2b84df8e53d49"); write_single_weight(9, "06df01defd000cf7");
+   write_single_weight(10, "fe31f321fef90418"); write_single_weight(11, "c6ac2449ef481e25");
+   write_single_weight(12, "d21e34e3402ee8d7"); write_single_weight(13, "00000000020dd311");
+   write_single_weight(14, "00000900fffffc1f"); write_single_weight(15, "ffffe06c0000172c");
+   write_single_weight(16, "a098929cac9e9981"); write_single_weight(17, "a7a69891a2a19e9a");
+   write_single_weight(18, "a0a6a69e9c99a8a9"); write_single_weight(19, "908aa5a09eac9f95");
+   write_single_weight(20, "2724292f8e9b979b"); write_single_weight(21, "171b24191d1d2020");
+   write_single_weight(22, "161d22161b1b1f18"); write_single_weight(23, "2020191a21151e1b");
+   write_single_weight(24, "26181c1a10152418"); write_single_weight(25, "2025261e262b1d23");
+   write_single_weight(26, "1d291f201e241e20"); write_single_weight(27, "1c232b2322261922");
+   write_single_weight(28, "2d2d1f2023272326"); write_single_weight(29, "d7dbd7df1f28222a");
+   write_single_weight(30, "c3ced5ddd9e0c9d4"); write_single_weight(31, "dfe2cddaddd5e0e0");
+   write_single_weight(32, "d9dcd7e1c7ddd8df"); write_single_weight(33, "bcc8d3dacdd8d2dd");
+   write_single_weight(34, "00000000ffffd985");
+   for (my $i=35; $i<64; $i++) { write_single_weight($i, "0000000000000000"); }
+}
+
+sub show_status {
+   my $low  = regread($IDS_HOST_RDATA_LOW_REG);
+   my $high = regread($IDS_HOST_RDATA_HIGH_REG);
+   my $tumor = $low & 0x1; my $busy = ($low >> 1) & 0x1;
+   my $halt  = ($low >> 2) & 0x1; my $full = $high & 0x1;
+   printf("Status: Tumor=%d, Busy=%d, CPU_Halted=%d, FIFO_Full=%d (Raw: Low=0x%x, High=0x%x)\n", 
+          $tumor, $busy, $halt, $full, $low, $high);
+}
+
+my $cmd = $ARGV[0] || "status";
+if ($cmd eq "load") {
+   regwrite($IDS_CPU_POWER_REG, 0); 
+   load_hardcoded_program();
+   load_hardcoded_weights();
+   regwrite($IDS_CPU_POWER_REG, 1);
+   print "=== Base Data loaded! ===\n=> Now run 'python send_image_udp.py image.hex' to send image and run inference.\n";
+} elsif ($cmd eq "status") {
+   show_status();
+} else {
+   print "Usage: ./idsreg [load | status]\n";
+}
